@@ -2,16 +2,21 @@
 
 *Создана виртуальная машина под управлением redOS8.*
 *Подключение к ВМ по SSH:*
+
 > $ ssh-keygen
+
 *Необходимо поместить rey.pub в .ssh/authorized_keys созданной ВМ*
 *Далее подключение (Пароль не потребуется)*
+
 > $ ssh user@IP
 
+
 *Установка PostgreSQL*
-> # dnf install postgresql16 postgresql16-server
-> # postgresql-16-setup initdb
-> # systemctl enable postgresql-16.service --now
-> # systemctl status postgresql-16.service
+
+> \# dnf install postgresql16 postgresql16-server
+> \# postgresql-16-setup initdb
+> \# systemctl enable postgresql-16.service --now
+> \# systemctl status postgresql-16.service
 >
 > ● postgresql-16.service - PostgreSQL 16 database server
 >     Loaded: loaded (/usr/lib/systemd/system/postgresql-16.service; enabled; preset: disabled)
