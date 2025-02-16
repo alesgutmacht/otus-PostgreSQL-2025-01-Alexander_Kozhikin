@@ -31,10 +31,10 @@
   
 *Создается таблица и добавляется 2 строки*  
 > [1]postgres=# BEGIN;  
-> [1]postgres=*# create table persons(id serial, first_name text, second_name text);  
-> [1]postgres=*# insert into persons(first_name, second_name) values('ivan', 'ivanov');  
-> [1]postgres=*# insert into persons(first_name, second_name) values('petr', 'petrov');  
-> [1]postgres=*# commit;  
+> [1]postgres=\*# create table persons(id serial, first_name text, second_name text);  
+> [1]postgres=\*# insert into persons(first_name, second_name) values('ivan', 'ivanov');  
+> [1]postgres=\*# insert into persons(first_name, second_name) values('petr', 'petrov');  
+> [1]postgres=\*# commit;  
 > [1]postgres=#  
 >  
 > [1]postgres=# show transaction isolation level;  
