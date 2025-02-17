@@ -64,10 +64,10 @@
 
 *Создаем repeatable read транзакцию в 1 сессии и добавляем строку*  
 > [1]postgres=# BEGIN;  
-> [1]postgres=*# set transaction isolation level repeatable read;  
-> [1]postgres=*# show transaction isolation level;  
+> [1]postgres=\*# set transaction isolation level repeatable read;  
+> [1]postgres=\*# show transaction isolation level;  
 > [1]repeatable read  
-> [1]postgres=*# insert into persons(first_name, second_name) values('sveta', 'svetova');  
+> [1]postgres=\*# insert into persons(first_name, second_name) values('sveta', 'svetova');  
   
 *Создаем repeatable read транзакцию во 2 сессии, но все равно видим 3 строки*  
 > [2]postgres=# BEGIN;  
@@ -78,14 +78,14 @@
 > [2](3 rows)  
   
 *Завершаем транзакцию в 1 сессии*  
-> [1]postgres=*# commit;  
+> [1]postgres=\*# commit;  
   
 *Проверяем во 2 сессии, но все равно видим 3 строки*  
-> [2]postgres=*# select * from persons;  
+> [2]postgres=\*# select * from persons;  
 > [2](3 rows)  
   
 *Теперь после сохранения во 2 сессии видим 4 строки (До коммита мы видим данные, которые были на момент открытия тразакции во 2 сессии)*  
-> [2]postgres=*# commit;  
+> [2]postgres=\*# commit;  
 > [2]postgres=# select * from persons;  
 > [2](4 rows)  
   
