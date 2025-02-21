@@ -111,13 +111,13 @@
 >              └─override.conf  
 >      Active: active (running)  
 >   
-> \# sudo -u postgres psql -c "show data_directory\;"  
+> \# sudo -u postgres psql -c \"show data_directory;\"  
 >    data_directory    
 > ---------------------  
 >  /pgsql_data/16/data  
   
 *Проверяем созданную таблицу (Видим ранее созданную таблицу с 1 столбцом c1 и значенией "1")*  
-> \# sudo -u postgres psql -c "select * from test\;"  
+> \# sudo -u postgres psql -c "select * from test;"  
 >  c1   
 > ----  
 >  1  
