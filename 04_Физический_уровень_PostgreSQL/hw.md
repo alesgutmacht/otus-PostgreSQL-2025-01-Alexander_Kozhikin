@@ -20,7 +20,7 @@
 >  
   
 *Вход пользователем postgres*  
-> $ sudo \-u postgres psql  
+> $ sudo -u postgres psql  
 > postgres=\#  
   
 *Создается таблица и добавляется 1 строка*  
@@ -34,8 +34,8 @@
 > \# systemctl stop postgresql-16.service  
   
 *Создаем новый диск и подключаем к ВМ:*  
-> $ sudo \-u qemu qemu-img create -f qcow2 -o preallocation=full abs_path/pgsql_data.qcow2 5G  
-> $ sudo virsh attach-disk --domain red8_pg16 abs_path/pgsql_data.qcow2 --target vdb --live -\-config  
+> $ sudo -u qemu qemu-img create -f qcow2 -o preallocation=full abs_path/pgsql_data.qcow2 5G  
+> $ sudo virsh attach-disk --domain red8_pg16 abs_path/pgsql_data.qcow2 --target vdb --live --config  
   
 *Видим новый подключенный диск vdb*  
 > \# lsblk  
@@ -77,8 +77,8 @@
   
 *Новый диск добавлен и примонтирован к системе*  
 > $ df -h /pgsql_data/  
-Filesystem                            Size  Used Avail Use% Mounted on  
-/dev/mapper/ro_red8--pg16-pgsql_data  4.9G   24K  4.6G   1% /pgsql_data  
+> Filesystem                            Size  Used Avail Use% Mounted on  
+> /dev/mapper/ro_red8--pg16-pgsql_data  4.9G   24K  4.6G   1% /pgsql_data  
   
 *Останавливаем PostgreSQL*  
 > \# systemctl stop postgresql-16.service   
@@ -111,13 +111,13 @@ Filesystem                            Size  Used Avail Use% Mounted on
 >              └─override.conf  
 >      Active: active (running)  
 >   
-> \# sudo \-u postgres psql \-c "show data_directory;"  
+> \# sudo -u postgres psql -c "show data_directory\;"  
 >    data_directory    
 > ---------------------  
 >  /pgsql_data/16/data  
   
 *Проверяем созданную таблицу (Видим ранее созданную таблицу с 1 столбцом c1 и значенией "1")*  
-> \# sudo \-u postgres psql \-c "select * from test;"  
+> \# sudo -u postgres psql -c "select * from test\;"  
 >  c1   
 > ----  
 >  1  
@@ -152,7 +152,7 @@ Filesystem                            Size  Used Avail Use% Mounted on
 >     Drop-In: /etc/systemd/system/postgresql-16.service.d  
 >              └─override.conf  
 >      Active: active (running)  
-> \# sudo \-u postgres psql \-c "show data_directory;"  
+> \# sudo -u postgres psql -c "show data_directory;"  
 >      data_directory     
 > ------------------------  
 >  /var/lib/pgsql/16/data  
@@ -180,7 +180,7 @@ Filesystem                            Size  Used Avail Use% Mounted on
   
 *На новой ВМ:*  
 *Подключить диск к другой ВМ*  
-> $ sudo virsh attach-disk --domain red8_pg16\-clone abs_path/pgsql_data.qcow2 --target vdb --live -\-config  
+> $ sudo virsh attach-disk --domain red8_pg16-clone abs_path/pgsql_data.qcow2 --target vdb --live --config  
 > Disk attached successfully  
   
 *Видим группу*  
@@ -234,13 +234,13 @@ Filesystem                            Size  Used Avail Use% Mounted on
 >     Drop-In: /etc/systemd/system/postgresql-16.service.d  
 >              └─postgresql-16.conf  
 >      Active: active (running)  
-> \# sudo \-u postgres psql \-c "show data_directory;"  
+> \# sudo -u postgres psql -c "show data_directory;"  
 >    data_directory    
 > ---------------------  
 >  /pgsql_data/16/data  
   
 *Проверяем созданную таблицу (Видим ранее созданную таблицу с 1 столбцом c1 и значенией "1")*  
-> \# sudo \-u postgres psql \-c "select * from test;"  
+> \# sudo -u postgres psql -c "select * from test;"  
 >  c1   
 > ----  
 >  1  
