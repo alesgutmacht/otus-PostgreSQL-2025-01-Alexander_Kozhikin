@@ -111,7 +111,7 @@
 >              └─override.conf  
 >      Active: active (running)  
 >   
-> \# sudo -u postgres psql -c \"show data_directory;\"  
+> \# sudo -u postgres psql -c "show data_directory;"  
 >    data_directory    
 > ---------------------  
 >  /pgsql_data/16/data  
@@ -159,6 +159,7 @@
   
 *На подключенном диске хранится копия БД и надо этот диск перенести в другую систему.*  
 *Работа с lvm:*  
+>  
 *Отключаем автоматическое монтирование*  
 > \# vi /etc/fstab  
 *Отмонтировать раздел*  
