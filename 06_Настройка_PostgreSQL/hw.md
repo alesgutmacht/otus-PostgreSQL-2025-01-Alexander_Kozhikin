@@ -3,10 +3,8 @@
 *Настройки взятых с сайта https://www.pgconfig.org/ для следующих параметров сервера:*  
   
 > GNU/Linux Based  
-> Architecture  
-> 64 Bits (x86-64)  
-> Storage type  
-> SSD Storage  
+> Architecture 64 Bits (x86-64)  
+> Storage type SSD Storage  
 > Number of CPUs 8  
 > Total Memory (GB) 128  
 > Max connections 200  
