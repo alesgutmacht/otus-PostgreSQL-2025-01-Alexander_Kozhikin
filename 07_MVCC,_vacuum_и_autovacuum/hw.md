@@ -1,22 +1,22 @@
 **MVCC, vacuum и autovacuum** =  
   
 *Инициализация кластера*  
-> # postgresql-16-setup initdb  
+> \# postgresql-16-setup initdb  
 > Initializing database ... OK  
   
 *Назначаем пароль пользователю postgres в linux*  
-> # passwd postgres  
+> \# passwd postgres  
 > Changing password for user postgres.  
   
 *Запускаем кластер и проверяем его работу*  
-> # systemctl start postgresql-16.service  
-> # systemctl status postgresql-16.service  
+> \# systemctl start postgresql-16.service  
+> \# systemctl status postgresql-16.service  
 > ● postgresql-16.service - PostgreSQL 16 database server  
 > Loaded: loaded (/usr/lib/systemd/system/postgresql-16.service; disabled; preset: disable>  
 > Active: active (running)  
   
 *Входим в Postgres и назначаем пароль для postgres в БД*  
-> # su - postgres  
+> \# su - postgres  
 > $ psql -c "password postgres"  
 > Enter new password for user "postgres":  
   
@@ -83,10 +83,10 @@
 > $ psql < set_conf.sql  
 > ALTER SYSTEM  
 > $ exit  
-> # systemctl restart postgresql-16.service  
+> \# systemctl restart postgresql-16.service  
   
 *Заново тестируем*  
-> # su - postgres  
+> \# su - postgres  
 > $ /usr/pgsql-16/bin/pgbench -c 8 -P 6 -T 60 -U postgres postgres  
 > pgbench (16.6)  
 > starting vacuum...end.  
@@ -143,7 +143,7 @@
 > $ psql -c "update table1 set i = 444 where i = 333;"  
   
 *Проверяем мертвые записи*  
-> postgres=# SELECT relname, n_live_tup, n_dead_tup, trunc(100*n_dead_tup/(n_live_tup+1))::float "ratio%", last_autovacuum FROM pg_stat_user_TABLEs WHERE relname = 'table1';  
+> postgres=\# SELECT relname, n_live_tup, n_dead_tup, trunc(100*n_dead_tup/(n_live_tup+1))::float "ratio%", last_autovacuum FROM pg_stat_user_TABLEs WHERE relname = 'table1';  
 > relname | n_live_tup | n_dead_tup | ratio% | last_autovacuum  
 ---------+------------+------------+--------+-------------------------------  
 table1 | 1000000 | 0 | 0 | 2025-02-26 16:29:19.304765+03  
@@ -164,9 +164,9 @@ table1 | 1000000 | 0 | 0 | 2025-02-26 16:29:19.304765+03
 > *Ничего не изменилось  
   
 *Отключаем Автовакуум и применяем изменения*  
-> postgres=# ALTER TABLE table1 SET (autovacuum_enabled = off);  
+> postgres=\# ALTER TABLE table1 SET (autovacuum_enabled = off);  
 > ALTER TABLE  
-> postgres=# SELECT pg_reload_conf();  
+> postgres=\# SELECT pg_reload_conf();  
 > pg_reload_conf  
 > ----------------  
 > t  
@@ -185,57 +185,57 @@ table1 | 1000000 | 0 | 0 | 2025-02-26 16:29:19.304765+03
 > UPDATE 1000000 x10  
   
 *Обновляем данные в таблице*  
-> postgres=# SELECT relname, n_live_tup, n_dead_tup, trunc(100*n_dead_tup/(n_live_tup+1))::float "ratio%", last_autovacuum FROM pg_stat_user_TABLEs WHERE relname = 'table1';  
+> postgres=\# SELECT relname, n_live_tup, n_dead_tup, trunc(100*n_dead_tup/(n_live_tup+1))::float "ratio%", last_autovacuum FROM pg_stat_user_TABLEs WHERE relname = 'table1';  
 > relname | n_live_tup | n_dead_tup | ratio% | last_autovacuum  
 > ---------+------------+------------+-----------+-----------------  
 > table1 | 0 | 9998993 | 999899300 |  
 > *Теперь после отключения автовакуума можем увидеть мертвые строки*  
   
 *Размер на диске*  
-> postgres=# select pg_relation_filepath('table1');  
+> postgres=\# select pg_relation_filepath('table1');  
 > pg_relation_filepath  
 > ----------------------  
 > base/5/24607  
 >  
-> postgres=# SELECT pg_size_pretty(pg_total_relation_size('table1'));  
+> postgres=\# SELECT pg_size_pretty(pg_total_relation_size('table1'));  
 > pg_size_pretty  
 > ----------------  
 > 380 MB  
   
 *Применяем самостоятельно вакуум проверяем мертвые строки и размер*  
-> postgres=# vacuum table1;  
+> postgres=\# vacuum table1;  
 > VACUUM  
 >  
-> postgres=# SELECT relname, n_live_tup, n_dead_tup, trunc(100*n_dead_tup/(n_live_tup+1))::float "ratio%", last_autovacuum FROM pg_stat_user_TABLEs WHERE relname = 'table1';  
+> postgres=\# SELECT relname, n_live_tup, n_dead_tup, trunc(100*n_dead_tup/(n_live_tup+1))::float "ratio%", last_autovacuum FROM pg_stat_user_TABLEs WHERE relname = 'table1';  
 > relname | n_live_tup | n_dead_tup | ratio% | last_autovacuum  
 > ---------+------------+------------+--------+-----------------  
 > table1 | 1000000 | 0 | 0 |  
 >  
-> postgres=# select pg_relation_filepath('table1');  
+> postgres=\# select pg_relation_filepath('table1');  
 > pg_relation_filepath  
 > ----------------------  
 > base/5/24607  
 > *Видим что мертвые строки исчезли, но размер на диске остался прежним*  
   
 *Делаем Вакуум с параметром full*  
-> postgres=# vacuum full table1;  
+> postgres=\# vacuum full table1;  
 > VACUUM  
 >  
-> postgres=# select pg_relation_filepath('table1');  
+> postgres=\# select pg_relation_filepath('table1');  
 > pg_relation_filepath  
 > ----------------------  
 > base/5/40991  
 >  
-> postgres=# SELECT pg_size_pretty(pg_total_relation_size('table1'));  
+> postgres=\# SELECT pg_size_pretty(pg_total_relation_size('table1'));  
 > pg_size_pretty  
 > ----------------  
 > 35 MB  
 > *Теперь место на диске освободилось*  
   
 *Обратно включаем Автовакуум*  
-> postgres=# ALTER TABLE table1 SET (autovacuum_enabled = on);  
+> postgres=\# ALTER TABLE table1 SET (autovacuum_enabled = on);  
 > ALTER TABLE  
-> postgres=# SELECT pg_reload_conf();  
+> postgres=\# SELECT pg_reload_conf();  
 > pg_reload_conf  
 > ----------------  
 > t  
