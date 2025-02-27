@@ -1,4 +1,4 @@
-**MVCC, vacuum и autovacuum** =  
+**MVCC, vacuum и autovacuum**  
   
 *Инициализация кластера*  
 > \# postgresql-16-setup initdb  
