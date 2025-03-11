@@ -65,7 +65,7 @@
 > psql (16.6)  
 > Type "help" for help.  
 >  
-> [2]postgres=\# conninfo  
+> [2]postgres=\# \conninfo  
 > You are connected to database "postgres" as user "postgres" on host "192.168.122.10" at port "5432".  
 > *Теперь подключение удалось*  
   
