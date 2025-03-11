@@ -70,7 +70,7 @@
 > *Теперь подключение удалось*  
   
 *Проверяем наличие таблицы*  
-> [2]postgres=\# SELECT 1.bash 2.bash axioma_files azimuth_doc blender-3.6.11-linux-x64 books Desktop Documents Downloads env err file godot gpb_p12 grub.txt hosts_vm.txt hs_err_pid3032.log installs journalctl_patroni.txt libclang mail_vpn.txt main.py Music openvpn out.txt pdfgrep-2.1.2 Pictures pkgs.txt programming Public Python-3.7.9 scripts start_vpn.sh status_patroni.txt Templates test.md test.md~ tmt.txt version.png Videos vm _Расширенное администрирование FROM test;  
+> [2]postgres=\# SELECT \* FROM test;  
 > c1  
 > ----  
 > 1  
