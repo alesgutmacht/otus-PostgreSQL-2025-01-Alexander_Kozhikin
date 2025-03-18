@@ -90,3 +90,126 @@
 > Is the server running on that host and accepting TCP/IP connections?  
 > *Кластер удален, по указанному адресу и порту не устанавливается соединение*  
   
+*Docker*  
+  
+*Устанавливем Docker, запускаем службу и скачиваем образ Postgres*  
+> \# dnf install docker-ce docker-compose  
+> Installed:  
+> container-selinux-2:2.169.0-3.red80.noarch                    containerd-1.7.24-1.red80.x86_64  
+> criu-3.17.1-3.red80.x86_64                                    docker-ce-4:27.4.1-2.red80.x86_64  
+> docker-ce-cli-4:27.4.1-2.red80.x86_64                         docker-ce-cli-doc-4:27.4.1-2.red80.noarch  
+> docker-compose-2.32.1-1.red80.x86_64                          docker-compose-switch-1.0.5-2.red80.x86_64  
+> libbsd-0.10.0-9.red80.x86_64                                  libcgroup-3.1.0-2.red80.x86_64  
+> libnet-1.2-5.red80.x86_64                                     runc-2:1.1.14-1.red80.x86_64  
+>   
+> Complete!  
+>   
+> \# systemctl enable docker.service --now  
+> Created symlink /etc/systemd/system/multi-user.target.wants/docker.service → /usr/lib/systemd/system/docker.service.  
+>   
+> \# docker pull postgres  
+> Using default tag: latest  
+> latest: Pulling from library/postgres  
+> 6e909acdb790: Pull complete  
+> fec99121872b: Pull complete  
+> 133acbc970df: Pull complete  
+> e02d97322fc6: Pull complete  
+> db9643c6baf3: Pull complete  
+> 9bcedd9434e7: Pull complete  
+> fc8982ec96d9: Pull complete  
+> 1824bd6b75d7: Pull complete  
+> fbad2bf2d5e6: Pull complete  
+> 221788d72606: Pull complete  
+> e5f43b682bc0: Pull complete  
+> e7a2d9e24ab0: Pull complete  
+> a96cb29b0d13: Pull complete  
+> 140970538145: Pull complete  
+> Digest: sha256:c522082e582d6267630d0ac3a857e262f4994012e2f841fc9eb65e7bd0500e20  
+> Status: Downloaded newer image for postgres:latest  
+> docker.io/library/postgres:latest  
+>   
+> \# docker images  
+> REPOSITORY   TAG       IMAGE ID       CREATED       SIZE  
+> postgres     latest    76e3e031d245   2 weeks ago   438MB  
+  
+*Создаем сеть для контейнеров Docker*  
+> \# docker network create pg_net  
+> 35168884a76bc8e5442fe92a8c153cfc5679ed59a212c7ddb8ee0dbed67e8e08  
+  
+*Запускаем контейнер с сервером*  
+> \# docker run --name pg_server --network pg_net -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d -v /var/lib/pgsql:/var/lib/postgresql/data postgres  
+> 0026c9a4e244462819636002105fbeb9ef712b9f6db363ae63b258743a158e31  
+  
+*Запускаем контейнер с клиентом*  
+> \# docker run --name pg_client --network pg_net -e POSTGRES_PASSWORD=postgres -d postgres  
+> d3c52d686e324f55334e005e900c6b7e499322a9df126f362649726dc21bfd2d  
+  
+*Просматриваем запущенные конетейнеры*  
+> \# docker ps -a  
+> CONTAINER ID   IMAGE      COMMAND                  CREATED              STATUS              PORTS                                       NAMES  
+> d3c52d686e32   postgres   "docker-entrypoint.s…"   19 seconds ago       Up 18 seconds       5432/tcp                                    pg_client  
+> 0026c9a4e244   postgres   "docker-entrypoint.s…"   About a minute ago   Up About a minute   0.0.0.0:5432->5432/tcp, :::5432->5432/tcp   pg_server  
+  
+*С клиентского контейнера подключаемся к БД сервера и создаем там базу, таблицу со строкой данных*  
+> \# docker exec -it pg_client bash  
+> root@d3c52d686e32:/\# su - postgres  
+> postgres@d3c52d686e32:~\$ psql -h pg_server -U postgres  
+> Password for user postgres:  
+> psql (17.4 (Debian 17.4-1.pgdg120+2))  
+> Type "help" for help.  
+>   
+> postgres=\# CREATE DATABASE my_db;  
+> CREATE DATABASE  
+> postgres=\# c my_db  
+> You are now connected to database "my_db" as user "postgres".  
+> my_db=\# CREATE TABLE my_table (column1 integer);  
+> CREATE TABLE  
+> my_db=\# INSERT INTO my_table VALUES (1847);  
+> INSERT 0 1  
+> my_db=\# SELECT \* FROM my_table;  
+> column1  
+> ---------  
+> 1847  
+> (1 row)  
+  
+*Удаляем контейнер с сервером*  
+> \# docker rm -f 0026c9a4e244  
+> 0026c9a4e244  
+  
+*Видим что сервера нет*  
+> \# docker ps -a  
+> CONTAINER ID   IMAGE      COMMAND                  CREATED          STATUS          PORTS      NAMES  
+> d3c52d686e32   postgres   "docker-entrypoint.s…"   14 minutes ago   Up 14 minutes   5432/tcp   pg_client  
+>   
+> postgres@d3c52d686e32:~\$ psql -h pg_server -U postgres  
+> psql: error: could not translate host name "pg_server" to address: Name or service not known  
+> *Подключиться с клиента не удалось, т.к. сервер удален*  
+  
+*Запускаем новый контейнер с сервером*  
+> \# docker run --name pg_server --network pg_net -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d -v /var/lib/pgsql:/var/lib/postgresql/data postgres  
+> d6630519cae8c637cdbb626710d8373d556800962743393da21b3d6d694abe87  
+  
+*Проверяем запущенные конетейнеры*  
+> \# docker ps -a  
+> CONTAINER ID   IMAGE      COMMAND                  CREATED          STATUS          PORTS                                       NAMES  
+> d6630519cae8   postgres   "docker-entrypoint.s…"   18 seconds ago   Up 17 seconds   0.0.0.0:5432->5432/tcp, :::5432->5432/tcp   pg_server  
+> d3c52d686e32   postgres   "docker-entrypoint.s…"   16 minutes ago   Up 16 minutes   5432/tcp                                    pg_client  
+  
+*Подключаемся с клиента и видим что в новом контейнере все данные на месте*  
+> \# docker exec -it pg_client bash  
+> root@d3c52d686e32:/\# su - postgres  
+> postgres@d3c52d686e32:~\$ psql -h pg_server -U postgres  
+> Password for user postgres:  
+> psql (17.4 (Debian 17.4-1.pgdg120+2))  
+> Type "help" for help.  
+>   
+> postgres=\# c my_db  
+> You are now connected to database "my_db" as user "postgres".  
+> my_db=\# SELECT \* FROM my_table;  
+> column1  
+> ---------  
+> 1847  
+> (1 row)  
+  
+*Для установки Docker на ВМ с RHEL (redOS) рекомендую статью*  
+> https://blog.sedicomm.com/2018/07/18/ustanovka-docker-i-obuchenie-bazovym-manipulyatsiyam-s-kontejnerami-v-centos-i-rhel-7-6-chast-1/  
