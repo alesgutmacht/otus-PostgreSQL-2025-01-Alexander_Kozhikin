@@ -381,7 +381,7 @@ index_db=# SET enable_seqscan = OFF;
 SET
 ```
   
-*Пробуем полнотекстовый поиск с использованием созданного интекса по тексту*  
+*Пробуем полнотекстовый поиск с использованием созданного индекса по тексту*  
 ```
 index_db=# SELECT * FROM documents WHERE to_tsvector('english', contents) @@ 'document';
    title    |                       metadata                       |                  contents                   
