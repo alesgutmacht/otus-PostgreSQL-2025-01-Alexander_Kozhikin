@@ -118,7 +118,7 @@ index_db=# EXPLAIN SELECT * FROM products WHERE product_id < 100;
 ```
 > *Seq Scan последовательное сканирование таблицы*
   
-*Добавляем индекс product_id и сбрасываем кеш планировщика*  
+*Создаем индекс product_id и сбрасываем кеш планировщика*  
 ```
 index_db=# CREATE INDEX indx_products_product_id ON products (product_id);
 CREATE INDEX
@@ -151,4 +151,64 @@ index_db=# EXPLAIN SELECT * FROM products WHERE product_id < 100;
 > *Bitmap Index Scan строится битовая карта для последовательного чтения дисковых страниц*  
 > *Bitmap Heap Scan из таблицы выбираются нужные строки с результатом запроса, используя битовую карту*  
   
-**  
+*План запроса с условиями по двум полям (с 1 индексом)*  
+```
+index_db=# EXPLAIN SELECT * FROM products WHERE product_id <= 100 AND brand = 'a';
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Bitmap Heap Scan on products  (cost=5.07..278.81 rows=1 width=14)
+   Recheck Cond: (product_id <= 100)
+   Filter: (brand = 'a'::bpchar)
+   ->  Bitmap Index Scan on indx_products_product_id  (cost=0.00..5.07 rows=103 width=0)
+         Index Cond: (product_id <= 100)
+(5 rows)
+```
+> *Bitmap Index Scan строится битовая карта для последовательного чтения дисковых страниц*  
+> *Filter добавляется фильтр по brand*  
+> *Bitmap Heap Scan из таблицы выбираются нужные строки с результатом запроса, используя битовую карту*  
+  
+*Создаем индекс brand и сбрасываем кеш планировщика*  
+```
+index_db=# CREATE INDEX indx_products_brand ON products (brand );
+CREATE INDEX
+index_db=# ANALYZE products ;
+ANALYZE
+```
+  
+*План запроса с условиями по двум полям (с 2 индексами)*  
+```
+index_db=# EXPLAIN SELECT * FROM products WHERE product_id <= 100 AND brand = 'a';
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on products  (cost=16.55..20.56 rows=1 width=14)
+   Recheck Cond: ((product_id <= 100) AND (brand = 'a'::bpchar))
+   ->  BitmapAnd  (cost=16.55..16.55 rows=1 width=0)
+         ->  Bitmap Index Scan on indx_products_product_id  (cost=0.00..5.01 rows=95 width=0)
+               Index Cond: (product_id <= 100)
+         ->  Bitmap Index Scan on indx_products_brand  (cost=0.00..11.29 rows=933 width=0)
+               Index Cond: (brand = 'a'::bpchar)
+(7 rows)
+```
+> *Bitmap Index Scan строится битовая карта для brand*  
+> *Bitmap Index Scan строится битовая карта для product_id*  
+> *BitmapAnd битовые карты объединяются по указанному условию AND*  
+> *Bitmap Heap Scan из таблицы выбираются нужные строки с результатом запроса, используя объединенную битовую карту*  
+  
+*Запрос для проверки уникальности зачений в столбце*  
+```
+index_db=# SELECT s.n_distinct FROM pg_stats s WHERE s.tablename = 'products' AND s.attname = 'brand';
+ n_distinct 
+------------
+         95
+(1 row)
+```
+> *В данном столбце таблицы 95 одинаковых значений*  
+```
+index_db=# SELECT s.n_distinct FROM pg_stats s WHERE s.tablename = 'products' AND s.attname = 'product_id';
+ n_distinct 
+------------
+         -1
+(1 row)
+```
+> *-1 означает что в данном столбце все значения уникальны*  
+  
