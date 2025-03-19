@@ -104,6 +104,7 @@ index_db=# EXPLAIN SELECT * FROM products WHERE product_id = 1;
  Seq Scan on products  (cost=0.00..1887.00 rows=1 width=14)
    Filter: (product_id = 1)
 (2 rows)
+*Seq Scan последовательное сканирование таблицы*
 ```
 *План запроса для выборки по диапазону*  
 ```
@@ -113,6 +114,37 @@ index_db=# EXPLAIN SELECT * FROM products WHERE product_id < 100;
  Seq Scan on products  (cost=0.00..1887.00 rows=97 width=14)
    Filter: (product_id < 100)
 (2 rows)
+*Seq Scan последовательное сканирование таблицы*
 ```
   
-**  
+*Добавляем индекс product_id и сбрасываем кеш планировщика*  
+```
+index_db=# CREATE INDEX indx_products_product_id ON products (product_id);
+CREATE INDEX
+index_db=# ANALYZE products ;
+ANALYZE
+```
+  
+*План запроса для выборки по равенству (с индексом)*  
+```
+index_db=# EXPLAIN SELECT * FROM products WHERE product_id = 1;
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Index Scan using indx_products_product_id on products  (cost=0.29..8.31 rows=1 width=14)
+   Index Cond: (product_id = 1)
+(2 rows)
+*Index Scan поиск с использованием индекса для условия product_id = 1*
+```
+*План запроса для выборки по диапазону (с индексом)*  
+```
+index_db=# EXPLAIN SELECT * FROM products WHERE product_id < 100;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Bitmap Heap Scan on products  (cost=5.01..255.36 rows=92 width=14)
+   Recheck Cond: (product_id < 100)
+   ->  Bitmap Index Scan on indx_products_product_id  (cost=0.00..4.98 rows=92 width=0)
+         Index Cond: (product_id < 100)
+(4 rows)
+*Bitmap Index Scan строится битовая карта для последовательного чтения дисковых страниц*
+*Bitmap Heap Scan из таблицы выбираются нужные строки с результатом запроса, используя битовую карту*
+```
