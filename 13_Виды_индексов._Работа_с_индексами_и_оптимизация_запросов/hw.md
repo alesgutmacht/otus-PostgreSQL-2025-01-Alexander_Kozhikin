@@ -202,7 +202,7 @@ index_db=# SELECT s.n_distinct FROM pg_stats s WHERE s.tablename = 'products' AN
          95
 (1 row)
 ```
-> *В данном столбце таблицы 95 одинаковых значений*  
+> *В данном столбце таблицы 95 уникальных значений*  
 ```
 index_db=# SELECT s.n_distinct FROM pg_stats s WHERE s.tablename = 'products' AND s.attname = 'product_id';
  n_distinct 
@@ -212,3 +212,192 @@ index_db=# SELECT s.n_distinct FROM pg_stats s WHERE s.tablename = 'products' AN
 ```
 > *-1 означает что в данном столбце все значения уникальны*  
   
+*Составные индексы*  
+  
+*Создаем составной индекса по product_id,brand и сбрасываем кеш планировщика*  
+```
+index_db=#  CREATE INDEX indx_products_product_id_brand ON products (product_id, brand);
+CREATE INDEX
+index_db=# ANALYZE products ;
+ANALYZE
+```
+  
+*План запроса с условиями по двум полям (с составным индексом)*  
+```
+index_db=# EXPLAIN SELECT * FROM products WHERE product_id <= 100 AND brand = 'a';
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Index Scan using indx_products_product_id_brand on products  (cost=0.29..9.38 rows=1 width=14)
+   Index Cond: ((product_id <= 100) AND (brand = 'a'::bpchar))
+(2 rows)
+
+index_db=# EXPLAIN SELECT * FROM products WHERE product_id = 100 AND brand <= 'a';
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Index Scan using indx_products_product_id_brand on products  (cost=0.29..8.31 rows=1 width=14)
+   Index Cond: ((product_id = 100) AND (brand <= 'a'::bpchar))
+(2 rows)
+```
+> *Index Scan поиск с использованием составного индекса для 2 условий*  
+
+*Создаем составной индекса по brand,product_id и сбрасываем кеш планировщика*  
+```
+index_db=# CREATE INDEX indx_products_brand_product_id ON products (brand, product_id);
+CREATE INDEX
+index_db=# ANALYZE products ;
+ANALYZE
+```
+  
+*План запроса с условиями по двум полям (используются 2 составных индекса)*  
+```
+index_db=# EXPLAIN SELECT * FROM products WHERE product_id <= 100 AND brand = 'a';
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Index Scan using indx_products_brand_product_id on products  (cost=0.29..8.31 rows=1 width=14)
+   Index Cond: ((brand = 'a'::bpchar) AND (product_id <= 100))
+(2 rows)
+
+index_db=# EXPLAIN SELECT * FROM products WHERE product_id = 100 AND brand <= 'a';
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Index Scan using indx_products_product_id_brand on products  (cost=0.29..8.31 rows=1 width=14)
+   Index Cond: ((product_id = 100) AND (brand <= 'a'::bpchar))
+(2 rows)
+```
+> *Index Scan запрос выполняется с использованием оптимального индекса, в зависимости от запрошенных условий*  
+  
+*Частичные индексы*  
+  
+*Создаем частичный индекс по is_available и сбрасываем кеш планировщика*  
+```
+index_db=# CREATE INDEX indx_products_is_available_true ON products(is_available) WHERE is_available = true;
+CREATE INDEX
+index_db=# ANALYZE products ;
+ANALYZE
+```
+  
+*План запроса с использованием частичного индекса*  
+```
+index_db=# EXPLAIN SELECT * FROM products WHERE is_available = true;
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
+ Index Scan using indx_products_is_available_true on products  (cost=0.15..124.84 rows=1033 width=14)
+(1 row)
+
+index_db=# EXPLAIN SELECT * FROM products WHERE is_available = false;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Seq Scan on products  (cost=0.00..1637.00 rows=98967 width=14)
+   Filter: (NOT is_available)
+(2 rows)
+
+index_db=# EXPLAIN SELECT * FROM products WHERE is_available != true;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Seq Scan on products  (cost=0.00..1637.00 rows=98967 width=14)
+   Filter: (NOT is_available)
+(2 rows)
+```
+> *В 1 случае используется частичный индекс Index Scan*  
+> *В 2 других последовательный поиск Seq Scan*  
+  
+*GIN-индексы*  
+  
+*Создаем таблицу documents и наполняем ее данными*  
+```
+index_db=# CREATE TABLE documents (
+    title    varchar(64),
+    metadata jsonb,
+    contents text
+);
+CREATE TABLE
+index_db=# INSERT INTO documents
+    (title, metadata, contents)
+VALUES
+    ( 'Document 1',
+      '{"author": "John",  "tags": ["legal", "real estate"]}',
+      'This is a legal document about real estate.' ),
+    ( 'Document 2',
+      '{"author": "Jane",  "tags": ["finance", "legal"]}',
+      'Financial statements should be verified.' ),
+    ( 'Document 3',
+      '{"author": "Paul",  "tags": ["health", "nutrition"]}',
+      'Regular exercise promotes better health.' ),
+    ( 'Document 4',
+      '{"author": "Alice", "tags": ["travel", "adventure"]}',
+      'Mountaineering requires careful preparation.' ),
+    ( 'Document 5',
+      '{"author": "Bob",   "tags": ["legal", "contracts"]}',
+      'Contracts are binding legal documents.' ),
+    ( 'Document 6',
+       '{"author": "Eve",  "tags": ["legal", "family law"]}',
+       'Family law addresses diverse issues.' ),
+    ( 'Document 7',
+      '{"author": "John",  "tags": ["technology", "innovation"]}',
+      'Tech innovations are changing the world.' );
+INSERT 0 7
+index_db=# SELECT * FROM documents;
+   title    |                         metadata                         |                   contents                   
+------------+----------------------------------------------------------+----------------------------------------------
+ Document 1 | {"tags": ["legal", "real estate"], "author": "John"}     | This is a legal document about real estate.
+ Document 2 | {"tags": ["finance", "legal"], "author": "Jane"}         | Financial statements should be verified.
+ Document 3 | {"tags": ["health", "nutrition"], "author": "Paul"}      | Regular exercise promotes better health.
+ Document 4 | {"tags": ["travel", "adventure"], "author": "Alice"}     | Mountaineering requires careful preparation.
+ Document 5 | {"tags": ["legal", "contracts"], "author": "Bob"}        | Contracts are binding legal documents.
+ Document 6 | {"tags": ["legal", "family law"], "author": "Eve"}       | Family law addresses diverse issues.
+ Document 7 | {"tags": ["technology", "innovation"], "author": "John"} | Tech innovations are changing the world.
+(7 rows)
+```
+  
+*Пробуем наивный полнотекстовый поиск*  
+```
+index_db=# SELECT * FROM documents WHERE contents like '%document%';
+   title    |                       metadata                       |                  contents                   
+------------+------------------------------------------------------+---------------------------------------------
+ Document 1 | {"tags": ["legal", "real estate"], "author": "John"} | This is a legal document about real estate.
+ Document 5 | {"tags": ["legal", "contracts"], "author": "Bob"}    | Contracts are binding legal documents.
+(2 rows)
+
+index_db=# EXPLAIN SELECT * FROM documents WHERE contents like '%document%';
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Seq Scan on documents  (cost=0.00..14.25 rows=1 width=210)
+   Filter: (contents ~~ '%document%'::text)
+(2 rows)
+```
+> *Seq Scan последовательное сканирование таблицы*  
+  
+*Создаем GIN-индекс на текст документа и сбрасываем кеш планировщика*  
+```
+index_db=# CREATE INDEX indx_documents_contents ON documents USING GIN(to_tsvector('english', contents));
+CREATE INDEX
+index_db=# ANALYZE documents ;
+ANALYZE
+```
+  
+*Отключаем последовательное сканирование*
+```
+index_db=# SET enable_seqscan = OFF;
+SET
+```
+  
+*Пробуем полнотекстовый поиск с использованием созданного интекса по тексту*  
+```
+index_db=# SELECT * FROM documents WHERE to_tsvector('english', contents) @@ 'document';
+   title    |                       metadata                       |                  contents                   
+------------+------------------------------------------------------+---------------------------------------------
+ Document 1 | {"tags": ["legal", "real estate"], "author": "John"} | This is a legal document about real estate.
+ Document 5 | {"tags": ["legal", "contracts"], "author": "Bob"}    | Contracts are binding legal documents.
+(2 rows)
+
+index_db=# EXPLAIN SELECT * FROM documents WHERE to_tsvector('english', contents) @@ 'document';
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on documents  (cost=8.54..13.06 rows=2 width=116)
+   Recheck Cond: (to_tsvector('english'::regconfig, contents) @@ '''document'''::tsquery)
+   ->  Bitmap Index Scan on indx_documents_contents  (cost=0.00..8.54 rows=2 width=0)
+         Index Cond: (to_tsvector('english'::regconfig, contents) @@ '''document'''::tsquery)
+(4 rows)
+```
+> *Bitmap Index Scan строится битовая карта для последовательного чтения дисковых страниц*  
+> *Bitmap Heap Scan из таблицы выбираются нужные строки с результатом запроса, используя битовую карту*  
