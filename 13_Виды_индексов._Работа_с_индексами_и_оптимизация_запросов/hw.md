@@ -94,3 +94,25 @@ index_db=# SELECT * FROM products WHERE product_id >= 5057 AND product_id <= 508
 (24 rows)
 ```
   
+*Простые индексы*  
+  
+*План запроса для выборки по равенству*  
+```
+index_db=# EXPLAIN SELECT * FROM products WHERE product_id = 1;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Seq Scan on products  (cost=0.00..1887.00 rows=1 width=14)
+   Filter: (product_id = 1)
+(2 rows)
+```
+*План запроса для выборки по диапазону*  
+```
+index_db=# EXPLAIN SELECT * FROM products WHERE product_id < 100;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Seq Scan on products  (cost=0.00..1887.00 rows=97 width=14)
+   Filter: (product_id < 100)
+(2 rows)
+```
+  
+**  
