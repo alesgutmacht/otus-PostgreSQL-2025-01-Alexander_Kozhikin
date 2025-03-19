@@ -20,7 +20,8 @@
 > \$ psql -c "\password postgres"  
 > Enter new password for user "postgres":  
   
-**
+*Создаем, наполняем и проверяем таблицу в БД*  
+```
 $ psql 
 psql (16.8)
 Type "help" for help.
@@ -91,8 +92,5 @@ index_db=# SELECT * FROM products WHERE product_id >= 5057 AND product_id <= 508
        5072 | C     | М      |    89 | f
        5075 | P     | Ж      |    48 | f
 (24 rows)
+```
   
-```
-       5072 | C     | М      |    89 | f
-       5075 | P     | Ж      |    48 | f
-```
