@@ -106,6 +106,7 @@ index_db=# EXPLAIN SELECT * FROM products WHERE product_id = 1;
 (2 rows)
 ```
 > *Seq Scan последовательное сканирование таблицы*  
+  
 *План запроса для выборки по диапазону*  
 ```
 index_db=# EXPLAIN SELECT * FROM products WHERE product_id < 100;
@@ -114,8 +115,8 @@ index_db=# EXPLAIN SELECT * FROM products WHERE product_id < 100;
  Seq Scan on products  (cost=0.00..1887.00 rows=97 width=14)
    Filter: (product_id < 100)
 (2 rows)
-*Seq Scan последовательное сканирование таблицы*
 ```
+> *Seq Scan последовательное сканирование таблицы*
   
 *Добавляем индекс product_id и сбрасываем кеш планировщика*  
 ```
@@ -135,6 +136,7 @@ index_db=# EXPLAIN SELECT * FROM products WHERE product_id = 1;
 (2 rows)
 ```
 > *Index Scan поиск с использованием индекса для условия product_id = 1*  
+  
 *План запроса для выборки по диапазону (с индексом)*  
 ```
 index_db=# EXPLAIN SELECT * FROM products WHERE product_id < 100;
