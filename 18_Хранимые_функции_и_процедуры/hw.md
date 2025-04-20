@@ -69,7 +69,6 @@ CREATE TABLE good_sum_mart
   
 *Создаем функцию и триггер для обновления таблицы good_sum_mart*  
 ```
-drop function update_good_sum_mart();
 -- Создание функции обновления таблицы с продажами:
 CREATE OR REPLACE FUNCTION update_good_sum_mart()
 RETURNS trigger
