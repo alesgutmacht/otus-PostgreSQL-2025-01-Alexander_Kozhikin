@@ -79,19 +79,22 @@ declare price numeric(16, 2); --Стоимость 1 единицы товара
 BEGIN
 	SELECT good_name FROM goods WHERE goods_id = new.good_id limit 1 into product_name;
 	SELECT good_price FROM goods WHERE goods_id = new.good_id into price;
-	if exists (SELECT good_name FROM good_sum_mart WHERE good_name = product_name LIMIT 1)
+	if product_name != ''
 	then
-		--update Если товар уже продавался
-		UPDATE good_sum_mart SET sum_sale = (sum_sale + (price * new.sales_qty)) WHERE good_name = product_name;
-	else
-		if product_name != ''
+		MERGE into good_sum_mart su
+		USING (SELECT * FROM goods WHERE goods_id = new.good_id limit 1) AS g
+		ON g.good_name = su.good_name
+		WHEN MATCHED
+		then
+			--update Если товар уже продавался
+			UPDATE SET sum_sale = (sum_sale + (price * new.sales_qty))
+		WHEN NOT MATCHED
 		then
 			--insert Если товар продается впервые
-			insert into good_sum_mart (good_name, sum_sale) values (product_name, price * new.sales_qty);
-		else
-			--Продается некорректный товар
-			RAISE INFO 'NO GOODS NAME';
-		end if;
+			insert (good_name, sum_sale) values (product_name, price * new.sales_qty);
+	else
+		--Продается некорректный товар
+		RAISE INFO 'NO GOODS NAME';
 	end if;
 	return null;
 END;
