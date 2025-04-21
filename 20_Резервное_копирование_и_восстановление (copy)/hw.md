@@ -110,11 +110,6 @@ Type "help" for help.
 postgres=# \c backup_restore_db 
 You are now connected to database "backup_restore_db" as user "postgres".
 
-backup_restore_db=# ANALYZE VERBOSE backup_restore.table2 ;
-INFO:  analyzing "backup_restore.table2"
-INFO:  "table2": scanned 1 of 1 pages, containing 5 live rows and 0 dead rows; 5 rows in sample, 5 estimated total rows
-ANALYZE
-
 backup_restore_db=# select * from backup_restore.table2 ;
  id |   name    
 ----+-----------
