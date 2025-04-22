@@ -80,6 +80,7 @@ postgres=# select * from backup_restore.table2 ;
 *Создание новой БД и схемы backup_restore:*  
 ```
 postgres=# CREATE DATABASE backup_restore_db;
+CREATE DATABASE
 postgres=# \c backup_restore_db 
 You are now connected to database "backup_restore_db" as user "postgres".
 backup_restore_db=# CREATE SCHEMA backup_restore;
