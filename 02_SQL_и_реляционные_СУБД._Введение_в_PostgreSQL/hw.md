@@ -4,7 +4,7 @@
 *Подключение к ВМ по SSH:*  
 > $ ssh-keygen  
   
-*Необходимо поместить rey.pub в .ssh/authorized_keys созданной ВМ.*  
+*Необходимо поместить key.pub в .ssh/authorized_keys созданной ВМ.*  
 *Далее подключение (Пароль не потребуется):*  
 > $ ssh user@IP  
   

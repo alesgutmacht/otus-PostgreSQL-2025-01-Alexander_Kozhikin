@@ -1,0 +1,128 @@
+scope: 'pg16-cluster'
+name: red8-pg16-node1 # Свой hostname
+
+log:
+  format: '%(asctime)s %(levelname)s: %(message)s'
+  level: INFO
+  max_queue_size: 1000
+  traceback_level: ERROR
+  type: plain
+
+restapi:
+  connect_address: 192.168.122.10:8008 # Свой ip
+  listen: 192.168.122.10:8008 # Свой ip
+
+zookeeper:
+  hosts:
+  - 192.168.122.10:2181
+  - 192.168.122.20:2181
+  - 192.168.122.30:2181
+
+# The bootstrap configuration. Works only when the cluster is not yet initialized.
+# If the cluster is already initialized, all changes in the `bootstrap` section are ignored!
+bootstrap:
+  # This section will be written into <dcs>:/<namespace>/<scope>/config after initializing
+  # new cluster and all other cluster members will use it as a `global configuration`.
+  # WARNING! If you want to change any of the parameters that were set up
+  # via `bootstrap.dcs` section, please use `patronictl edit-config`!
+  dcs:
+    loop_wait: 10
+    retry_timeout: 10
+    ttl: 30
+    postgresql:
+      parameters:
+        DateStyle: ISO, MDY
+        TimeZone: Europe/Moscow
+        cluster_name: ''
+        default_text_search_config: pg_catalog.english
+        dynamic_shared_memory_type: posix
+        hot_standby: 'on'
+        lc_messages: en_US.UTF-8
+        lc_monetary: en_US.UTF-8
+        lc_numeric: en_US.UTF-8
+        lc_time: en_US.UTF-8
+        log_filename: postgresql-%a.log
+        log_rotation_age: 1d
+        log_rotation_size: '0'
+        log_timezone: Europe/Moscow
+        log_truncate_on_rotation: 'on'
+        logging_collector: 'on'
+        max_connections: '100'
+        max_locks_per_transaction: '64'
+        max_prepared_transactions: '0'
+        max_replication_slots: '10'
+        max_wal_senders: '10'
+        max_wal_size: 1GB
+        max_worker_processes: '8'
+        min_wal_size: 80MB
+        shared_buffers: 128MB
+        track_commit_timestamp: 'off'
+        wal_keep_size: '0'
+        wal_level: replica
+        wal_log_hints: 'on'
+        shared_preload_libraries: pg_stat_statements,auto_explain
+        pg_stat_statements.max: 10000
+        pg_stat_statements.track: all
+        pg_stat_statements.save: off
+        auto_explain.log_min_duration: 10s
+        auto_explain.log_analyze: true
+        auto_explain.log_buffers: true
+        auto_explain.log_timing: false
+        auto_explain.log_triggers: true
+        auto_explain.log_verbose: true
+        auto_explain.log_nested_statements: true
+      use_pg_rewind: false
+      use_slots: true
+
+postgresql:
+  method: initdb
+  authentication:
+    replication:
+      password: 'replicator'
+      username: 'replicator'
+    superuser:
+      password: postgres
+      username: postgres
+  bin_dir: /usr/pgsql-16/bin
+  connect_address: 192.168.122.10:5432 # Свой ip
+  data_dir: /var/lib/pgsql/16/data
+  listen: 192.168.122.10,localhost:5432 # Свой ip
+  use_unix_socket: true
+  parameters:
+    unix_socket_directories: /var/run/postgresql
+    config_file: /var/lib/pgsql/16/data/postgresql.conf
+    hba_file: /var/lib/pgsql/16/data/pg_hba.conf
+    ident_file: /var/lib/pgsql/16/data/pg_ident.conf
+  remove_data_directory_on_rewind_failure: false
+  remove_data_directory_on_diverged_timelines: false
+  initdb: # List options to be passed on to initdb
+  - encoding: UTF8
+  - locale: en_US.UTF-8
+  - data-checksums
+  pg_hba:
+  - local   all             all                                     peer
+  - host    all             all             127.0.0.1/32            scram-sha-256
+  - host    all             all             192.168.122.0/24            scram-sha-256
+  - host    all             all             ::1/128                 scram-sha-256
+  - local   replication     all                                     peer
+  - host    replication     replicator             localhost            trust
+  - host    replication     all             127.0.0.1/32            scram-sha-256
+  - host    replication     all             ::1/128                 scram-sha-256
+  - host    replication     replicator             192.168.122.0/24            scram-sha-256
+
+create_replica_methods:
+- basebackup
+basebackup:
+  max-rate: '100M'
+  checkpoint: 'fast'
+
+watchdog:
+  mode: off # Allowed values: off, automatic, required
+  device: /dev/watchdog
+  safety_margin: 5
+
+tags:
+  clonefrom: false
+  nofailover: false
+  noloadbalance: false
+  nosync: false

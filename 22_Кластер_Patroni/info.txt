@@ -1,0 +1,96 @@
+Обеспечение высокой доступности PostgreSQL на базе кластера Patroni в среде RedOS 8.
+
+# dnf install java-21-openjdk
+# dnf install postgresql16 postgresql16-server postgresql16-contrib
+# dnf install patroni patroni-zookeeper
+# dnf install keepalived
+
+# postgresql-16-setup initdb
+Initializing database ... OK
+
+# systemctl start postgresql-16.service
+# systemctl stop postgresql-16.service
+# systemctl restart postgresql-16.service
+# systemctl status postgresql-16.service
+
+# passwd postgres 
+Changing password for user postgres.
+New password: 
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+
+$ vi 16/data/postgresql.conf
+$ vi 16/data/pg_hba.conf
+
+postgres=# \password postgres 
+Enter new password for user "postgres": 
+Enter it again:
+
+postgres=# create user replicator replication login encrypted password '';
+NOTICE:  empty string is not a valid password, clearing password
+CREATE ROLE
+postgres=# \password replicator 
+Enter new password for user "replicator": 
+Enter it again:
+
+postgres=# create user pgbouncer password '';
+NOTICE:  empty string is not a valid password, clearing password
+CREATE ROLE
+postgres=# \password pgbouncer 
+Enter new password for user "pgbouncer": 
+Enter it again:
+
+postgres=# create extension pg_stat_statements;
+CREATE EXTENSION
+postgres=# load 'auto_explain';
+LOAD
+
+$ patroni --generate-config > patroni.yml
+$ patroni --validate-config /etc/patroni/patroni.yml
+
+$ patronictl -c /etc/patroni/patroni.yml remove pg16-cluster
+
+$ patronictl -c /etc/patroni/patroni.yml list
++ Cluster: pg16-cluster (7503063564493600161) -----------+----+-----------+
+| Member          | Host           | Role    | State     | TL | Lag in MB |
++-----------------+----------------+---------+-----------+----+-----------+
+| red8-pg16-node1 | 192.168.122.10 | Leader  | running   |  2 |           |
+| red8-pg16-node2 | 192.168.122.20 | Replica | streaming |  2 |         0 |
+| red8-pg16-node3 | 192.168.122.30 | Replica | streaming |  2 |         0 |
++-----------------+----------------+---------+-----------+----+-----------+
+
+$ patronictl -c /etc/patroni/patroni.yml list
++ Cluster: pg16-cluster (7503063564493600161) -----------+----+-----------+
+| Member          | Host           | Role    | State     | TL | Lag in MB |
++-----------------+----------------+---------+-----------+----+-----------+
+| red8-pg16-node1 | 192.168.122.10 | Replica | streaming |  4 |         0 |
+| red8-pg16-node2 | 192.168.122.20 | Replica | streaming |  4 |         0 |
+| red8-pg16-node3 | 192.168.122.30 | Leader  | running   |  4 |           |
++-----------------+----------------+---------+-----------+----+-----------+
+
+# vi /etc/systemd/system/multi-user.target.wants/patroni.service
+# systemctl daemon-reload
+# systemctl restart patroni.service
+# systemctl status patroni.service
+
+echo stat | nc localhost 2181
+
+Проверить конфигурацию HAProxy
+# haproxy -f /etc/haproxy/haproxy.cfg -c
+
+chown -R pgbouncer:pgbouncer /etc/pgbouncer/
+
+Только чтение данных
+```
+$ /usr/pgsql-16/bin/psql -h 192.168.122.100 -U postgres -p 5003
+Password for user postgres: 
+psql (16.8)
+Type "help" for help.
+
+postgres=# insert into table2 values (07-46);
+ERROR:  cannot execute INSERT in a read-only transaction
+postgres=# 
+```
+
+
+
