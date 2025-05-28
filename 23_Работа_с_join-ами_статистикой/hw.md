@@ -158,6 +158,6 @@ city_name|bike_name|air_name|car_name|
 Тула     |ТМЗ      |        |ГАЗ     |
 
 Right - совпадения по таблице bikes
-Left - совпадения по таблице aircrafts
+Left - совпадения по таблице citys
 Cross - совмещение каждой строки всех таблиц
 ```
