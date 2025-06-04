@@ -107,10 +107,10 @@ CREATE SUBSCRIPTION
   
 *Заполняем таблицы на сервере 1 и 2*  
 ```
-postgres=# insert into public.test values (1, '1Вводим данные на сервере 1');
+1postgres=# insert into public.test values (1, '1Вводим данные на сервере 1');
 INSERT 0 1
 
-postgres=# insert into public.test2 values (1, '1Вводим данные на сервере 2');
+2postgres=# insert into public.test2 values (1, '1Вводим данные на сервере 2');
 INSERT 0 1
 **  
 ```
