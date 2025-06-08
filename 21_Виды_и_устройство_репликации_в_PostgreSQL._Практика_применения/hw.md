@@ -2,7 +2,7 @@
   
 **Логическая репликация**  
 
-*Настройка серверов 1 и 2*  
+*Настройка серверов 1, 2 и 3*  
 ```
 postgres=# CREATE ROLE replicator WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT REPLICATION NOBYPASSRLS CONNECTION LIMIT -1 PASSWORD '*';
 CREATE ROLE
