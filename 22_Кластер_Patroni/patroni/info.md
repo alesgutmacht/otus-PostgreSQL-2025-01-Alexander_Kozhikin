@@ -40,7 +40,7 @@ $ patroni --validate-config /etc/patroni/patroni.yml
 # chown -R postgres:postgres /etc/patroni/
 # chmod 700 /etc/patroni/
 
-Postgres должен быть остановлен перез запуском Patroni.
+Postgres должен быть остановлен перед запуском Patroni.
 На репликах данные кластера Postgres должны быть удалены.
 
 # systemctl stop postgresql-16.service
