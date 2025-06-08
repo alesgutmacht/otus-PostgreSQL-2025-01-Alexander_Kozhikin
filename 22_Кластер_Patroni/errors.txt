@@ -1,2 +1,0 @@
-2025-05-11 10:48:48,748 WARNING: postgresql parameter cluster_name= failed validation, defaulting to None
-2025-05-11 10:48:48,748 WARNING: postgresql parameter wal_keep_size=0 failed validation, defaulting to 128MB

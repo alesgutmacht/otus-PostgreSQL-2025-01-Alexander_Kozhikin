@@ -78,7 +78,7 @@ echo stat | nc localhost 2181
 Проверить конфигурацию HAProxy
 # haproxy -f /etc/haproxy/haproxy.cfg -c
 
-chown -R pgbouncer:pgbouncer /etc/pgbouncer/
+
 
 Только чтение данных
 ```

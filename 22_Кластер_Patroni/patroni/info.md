@@ -1,3 +1,22 @@
+*Установка*  
+```
+# dnf install install patroni patroni-zookeeper
+
+python3-jmespath-1.0.0-5.red80.noarch
+python3-prettytable-0.7.2-30.red80.noarch
+python3-ydiff-1.2-7.red80.noarch
+libpq-17.4-2.red80.x86_64
+patroni-4.0.5-3.red80.noarch
+python3-boto3-1.34.47-1.red80.noarch
+python3-botocore-1.34.47-1.red80.noarch
+python3-click-8.1.7-1.red80.noarch
+python3-psycopg2-2.9.6-1.red80.x86_64
+python3-pysyncobj-0.3.13-3.red80.noarch
+python3-s3transfer-0.10.1-1.red80.noarch
+python3-kazoo-2.8.0-7.red80.noarch
+patroni-zookeeper-4.0.5-3.red80.noarch
+```
+  
 *Создание конфигурационного файла Patroni*  
 ```
 Выполняется от имени пользователя postgres
@@ -7,13 +26,32 @@ $ patroni --generate-config > patroni.yml
 Файл необходимо переместить в каталог Patroni /etc/patroni и назначить владельца.
 
 # mv /var/lib/pgsql/patroni.yml /etc/patroni
-# chown root:root /etc/patroni/patroni.yml
+# chown postgres:postgres /etc/patroni/patroni.yml
 
 ```
 *Проверка конфигурационного файла Patroni*  
 ```
 $ patroni --validate-config /etc/patroni/patroni.yml
 Если файл корректный, то вывод ничего не вернет
+```
+  
+*Настройка*  
+```
+# chown -R postgres:postgres /etc/patroni/
+# chmod 700 /etc/patroni/
+
+Postgres должен быть остановлен перез запуском Patroni.
+На репликах данные кластера Postgres должны быть удалены.
+
+# systemctl stop postgresql-16.service
+# rm -fr /var/lib/pgsql/16/data/*
+
+# systemctl enable patroni.service --now
+# systemctl status patroni.service
+
+● patroni.service - Runners to orchestrate a high-availability PostgreSQL
+     Loaded: loaded (/usr/lib/systemd/system/patroni.service; enabled; preset: disabled)
+     Active: active (running)
 ```
   
 *Изменение параметров Postgres*  
