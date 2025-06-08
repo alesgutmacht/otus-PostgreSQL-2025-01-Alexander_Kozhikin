@@ -55,3 +55,37 @@ $ psql -c "show shared_buffers;"
  130MB
 (1 row)
 ```
+  
+*Переключение лидера вручную*  
+```
+[postgres@red8-pg16-node1 ~]$ patronictl -c /etc/patroni/patroni.yml switchover
+Current cluster topology
++ Cluster: pg16-cluster (7503063564493600161) -----------+----+-----------+
+| Member          | Host           | Role    | State     | TL | Lag in MB |
++-----------------+----------------+---------+-----------+----+-----------+
+| red8-pg16-node1 | 192.168.122.10 | Replica | streaming | 51 |         0 |
+| red8-pg16-node2 | 192.168.122.20 | Leader  | running   | 51 |           |
+| red8-pg16-node3 | 192.168.122.30 | Replica | streaming | 51 |         0 |
++-----------------+----------------+---------+-----------+----+-----------+
+Primary [red8-pg16-node2]: 
+Candidate ['red8-pg16-node1', 'red8-pg16-node3'] []: red8-pg16-node3
+When should the switchover take place (e.g. 2025-06-07T15:14 )  [now]: 
+Are you sure you want to switchover cluster pg16-cluster, demoting current leader red8-pg16-node2? [y/N]: y
+2025-06-07 14:14:21.67936 Successfully switched over to "red8-pg16-node3"
++ Cluster: pg16-cluster (7503063564493600161) -----------+----+-----------+
+| Member          | Host           | Role    | State     | TL | Lag in MB |
++-----------------+----------------+---------+-----------+----+-----------+
+| red8-pg16-node1 | 192.168.122.10 | Replica | streaming | 51 |         0 |
+| red8-pg16-node2 | 192.168.122.20 | Replica | stopped   |    |   unknown |
+| red8-pg16-node3 | 192.168.122.30 | Leader  | running   | 51 |           |
++-----------------+----------------+---------+-----------+----+-----------+
+[postgres@red8-pg16-node1 ~]$ patronictl -c /etc/patroni/patroni.yml list
++ Cluster: pg16-cluster (7503063564493600161) -----------+----+-----------+
+| Member          | Host           | Role    | State     | TL | Lag in MB |
++-----------------+----------------+---------+-----------+----+-----------+
+| red8-pg16-node1 | 192.168.122.10 | Replica | streaming | 52 |         0 |
+| red8-pg16-node2 | 192.168.122.20 | Replica | streaming | 52 |         0 |
+| red8-pg16-node3 | 192.168.122.30 | Leader  | running   | 52 |           |
++-----------------+----------------+---------+-----------+----+-----------+
+[postgres@red8-pg16-node1 ~]$ 
+```

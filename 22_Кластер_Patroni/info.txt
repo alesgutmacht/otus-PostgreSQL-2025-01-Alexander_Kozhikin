@@ -92,5 +92,114 @@ ERROR:  cannot execute INSERT in a read-only transaction
 postgres=# 
 ```
 
+```
+
+[user@red8-pg16-work ~]$ /usr/pgsql-16/bin/psql -h 192.168.122.100 -U postgres -p 5000
+Password for user postgres: 
+psql (16.8)
+Type "help" for help.
+
+postgres=# \conninfo 
+You are connected to database "postgres" as user "postgres" on host "192.168.122.100" at port "5000".
+
+postgres=# CREATE TABLE test_table (c1 integer, c2 text);
+CREATE TABLE
+
+postgres=# INSERT INTO test_table VALUES (1, 'ТЕСТОВЫЙ ТЕКСТ');
+INSERT 0 1
+
+```
+
+```
+
+[user@red8-pg16-work ~]$ /usr/pgsql-16/bin/psql -h 192.168.122.100 -U postgres -p 5001
+Password for user postgres: 
+psql (16.8)
+Type "help" for help.
+
+postgres=# \conninfo 
+You are connected to database "postgres" as user "postgres" on host "192.168.122.100" at port "5001".
+
+postgres=# CREATE TABLE test_table_rep (c1 integer, c2 text);
+ERROR:  cannot execute CREATE TABLE in a read-only transaction
+
+postgres=# SELECT * FROM test_table;
+ c1 |       c2       
+----+----------------
+  1 | ТЕСТОВЫЙ ТЕКСТ
+(1 row)
+
+
+```
+
+
+
+
+
+[postgres@red8-pg16-node2 ~]$ echo stat | nc localhost 2181
+Zookeeper version: 3.8.4-9316c2a7a97e1666d8f4593f34dd6fc36ecc436c, built on 2024-02-12 22:16 UTC
+Clients:
+ /[0:0:0:0:0:0:0:1]:58996[0](queued=0,recved=1,sent=0)
+ /192.168.122.10:53140[1](queued=0,recved=9594,sent=9595)
+
+Latency min/avg/max: 0/0.3132/14
+Received: 9595
+Sent: 9595
+Connections: 2
+Outstanding: 0
+Zxid: 0x4600000033
+Mode: leader
+Node count: 17
+Proposal sizes last/min/max: 48/48/4876
+
+[postgres@red8-pg16-node1 ~]$ echo stat | nc localhost 2181
+Zookeeper version: 3.8.4-9316c2a7a97e1666d8f4593f34dd6fc36ecc436c, built on 2024-02-12 22:16 UTC
+Clients:
+ /192.168.122.20:42290[1](queued=0,recved=9502,sent=9503)
+ /192.168.122.30:44750[1](queued=0,recved=9490,sent=9491)
+ /[0:0:0:0:0:0:0:1]:37100[0](queued=0,recved=1,sent=0)
+
+Latency min/avg/max: 0/0.3612/43
+Received: 19044
+Sent: 19045
+Connections: 3
+Outstanding: 0
+Zxid: 0x4600000033
+Mode: follower
+Node count: 17
+
+
+
+
+[postgres@red8-pg16-node3 ~]$ patronictl -c /etc/patroni/patroni.yml list
++ Cluster: pg16-cluster (7503063564493600161) -----------+----+-----------+
+| Member          | Host           | Role    | State     | TL | Lag in MB |
++-----------------+----------------+---------+-----------+----+-----------+
+| red8-pg16-node1 | 192.168.122.10 | Replica | streaming | 51 |         0 |
+| red8-pg16-node2 | 192.168.122.20 | Leader  | running   | 51 |           |
+| red8-pg16-node3 | 192.168.122.30 | Replica | streaming | 51 |         0 |
++-----------------+----------------+---------+-----------+----+-----------+
+
+
+Успешно развернут кластер PostgreSQL на базе Patroni, с использованием ZooKeeper в среде RedOS 8.
+
+Практически протестирована совместимость связки Patroni + ZooKeeper с отечественной операционной системой.
+
+Обеспечена высокая доступность и отказоустойчивость кластера PostgreSQL.
+
+Реализована возможность распределения нагрузки за счет подключения к основной БД для полноценной работы и подключения к резервной БД только для чтения.
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
